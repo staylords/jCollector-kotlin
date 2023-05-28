@@ -7,6 +7,7 @@
 
 package com.staylords.jcollector
 
+import com.staylords.jcollector.services.CollectorService
 import org.bukkit.plugin.java.JavaPlugin
 
 /**
@@ -17,13 +18,19 @@ import org.bukkit.plugin.java.JavaPlugin
  */
 class JCollector : JavaPlugin() {
 
+    lateinit var collectorService: CollectorService
+
     override fun onEnable() {
         instance = this
+
+        collectorService = CollectorService(this)
     }
+
 
     companion object {
 
         lateinit var instance: JCollector
 
     }
+
 }

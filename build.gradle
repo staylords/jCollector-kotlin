@@ -24,11 +24,16 @@ repositories {
     maven {
         url 'https://papermc.io/repo/repository/maven-public/'
     }
+    maven {
+        url 'https://ci.ender.zone/plugin/repository/everything/'
+    }
 }
 
 dependencies {
     compileOnly 'org.spigotmc:spigot:1.8.8-R0.1-SNAPSHOT'
     compileOnly 'org.spigotmc:spigot-api:1.8.8-R0.1-SNAPSHOT'
+
+    compileOnly 'com.massivecraft:Factions:1.6.9.5-U0.6.21'
 
     implementation 'com.jonahseguin:drink:1.0.5'
 }
