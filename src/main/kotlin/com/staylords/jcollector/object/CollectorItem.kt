@@ -8,6 +8,7 @@
 package com.staylords.jcollector.`object`
 
 import org.bukkit.Material
+import org.bukkit.inventory.ItemStack
 
 /**
  * @project jCollector-kotlin
@@ -17,12 +18,16 @@ import org.bukkit.Material
  */
 class CollectorItem() {
 
-    private lateinit var displayName: String
+    lateinit var displayName: String
     lateinit var type: Material
 
     constructor(displayName: String, type: Material) : this() {
         this.displayName = displayName
         this.type = type
+    }
+
+    fun toItemStack(): ItemStack {
+        return ItemStack(type)
     }
 
     //private fun test() {

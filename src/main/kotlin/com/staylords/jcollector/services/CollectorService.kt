@@ -8,8 +8,10 @@
 package com.staylords.jcollector.services
 
 import com.staylords.jcollector.JCollector
+import com.staylords.jcollector.hooks.impl.ShopGuiPlusHook
 import com.staylords.jcollector.`object`.Collector
 import com.staylords.jcollector.`object`.CollectorItem
+import net.brcdev.shopgui.ShopGuiPlusApi
 import org.bukkit.Material
 
 /**
@@ -40,12 +42,20 @@ class CollectorService(private val plugin: JCollector) {
         return collectorItems.stream().filter { item -> item.type == type }.findFirst().orElse(null)
     }
 
-    private fun loadCollectors() {
+    fun getItemPrice(item: CollectorItem): Double {
+        val sgpHook: ShopGuiPlusHook? = (plugin.hookService.getHook("ShopGUIPlus") as ShopGuiPlusHook?)
+        if (sgpHook != null && sgpHook.isEnabled()) {
+            return ShopGuiPlusApi.getItemStackPriceSell(item.toItemStack())
+        }
+        return 0.0
+    }
 
+    private fun loadCollectors() {
+        // Load collectors from database
     }
 
     private fun loadItems() {
-
+        // Load items from database
     }
 
 }
