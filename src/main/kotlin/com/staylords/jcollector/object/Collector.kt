@@ -5,9 +5,7 @@
  * explicit permission from original author: staylords
  */
 
-package com.staylords.jcollector
-
-import org.bukkit.plugin.java.JavaPlugin
+package com.staylords.jcollector.`object`
 
 /**
  * @project jCollector-kotlin
@@ -15,15 +13,8 @@ import org.bukkit.plugin.java.JavaPlugin
  * @date 28/05/2023
  * @author me@staylords.com
  */
-class JCollector : JavaPlugin() {
+class Collector {
 
-    override fun onEnable() {
-        instance = this
-    }
 
-    companion object {
 
-        lateinit var instance: JCollector
-
-    }
 }
