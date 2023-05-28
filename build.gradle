@@ -1,0 +1,53 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.5.0'
+    id 'com.github.johnrengelman.shadow' version '5.2.0'
+}
+
+compileJava.options.encoding = 'UTF-8'
+
+group = 'com.staylords'
+version = '1.0'
+
+targetCompatibility = '1.8'
+sourceCompatibility = '1.8'
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+
+    maven {
+        url 'https://repo.md-5.net/content/groups/public/'
+    }
+    maven {
+        url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
+    }
+    maven {
+        url 'https://papermc.io/repo/repository/maven-public/'
+    }
+}
+
+dependencies {
+    compileOnly 'org.spigotmc:spigot:1.8.8-R0.1-SNAPSHOT'
+    compileOnly 'org.spigotmc:spigot-api:1.8.8-R0.1-SNAPSHOT'
+
+    implementation 'com.jonahseguin:drink:1.0.5'
+
+    compileOnly 'org.projectlombok:lombok:1.18.24'
+    annotationProcessor 'org.projectlombok:lombok:1.18.24'
+}
+
+shadowJar {
+    classifier = null
+    minimize()
+    archiveFileName = 'jCollector.jar'
+}
+
+apply plugin: "kotlin"
+
+compileKotlin {
+    kotlinOptions.jvmTarget = '1.8'
+}
+
+sourceSets {
+    main.java.srcDirs += 'src/main/kotlin/'
+}
