@@ -27,10 +27,6 @@ class HookService(plugin: JCollector) {
      * Vault and FactionsUUID are NOT optional plugins as jCollector depends on them to work.
      */
     init {
-        if (plugin.server.pluginManager.getPlugin("Vault") == null && plugin.server.pluginManager.getPlugin("Factions")) {
-            plugin.server.shutdown()
-        }
-
         register("Vault", VaultHook())
 
         if (plugin.server.pluginManager.getPlugin("ShopGUIPlus") != null) {
@@ -49,6 +45,10 @@ class HookService(plugin: JCollector) {
 
     fun getHook(name: String): Hook? {
         return hooks[name]
+    }
+
+    fun getVaultHook(): VaultHook {
+        return (getHook("Vault") as VaultHook)
     }
 
 }

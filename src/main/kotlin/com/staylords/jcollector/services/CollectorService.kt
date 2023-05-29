@@ -7,12 +7,15 @@
 
 package com.staylords.jcollector.services
 
+import com.massivecraft.factions.*
 import com.staylords.jcollector.JCollector
 import com.staylords.jcollector.hooks.impl.ShopGuiPlusHook
 import com.staylords.jcollector.`object`.Collector
 import com.staylords.jcollector.`object`.CollectorItem
 import net.brcdev.shopgui.ShopGuiPlusApi
+import org.bukkit.Location
 import org.bukkit.Material
+import org.bukkit.entity.Player
 
 /**
  * @project jCollector-kotlin
@@ -24,7 +27,7 @@ class CollectorService(private val plugin: JCollector) {
 
     private val collectors: HashMap<String, Collector> = HashMap()
 
-    private val collectorItems: ArrayList<CollectorItem> = ArrayList()
+    val collectorItems: ArrayList<CollectorItem> = ArrayList()
 
     init {
         collectors.clear()
@@ -34,8 +37,33 @@ class CollectorService(private val plugin: JCollector) {
         loadCollectors()
     }
 
+    fun addCollector(collector: Collector) {
+        collectors[collector.id] = collector
+        collector.initialize()
+    }
+
     fun getCollector(id: String): Collector? {
         return collectors[id]
+    }
+
+    fun getCollector(player: Player): Collector? {
+        val factionPlayer: FPlayer = FPlayers.getInstance().getByPlayer(player)
+        return collectors[factionPlayer.faction.id]
+    }
+
+    fun getCollector(location: Location): Collector? {
+        val faction: Faction = Board.getInstance().getFactionAt(FLocation(location.chunk))
+        return collectors[faction.id]
+    }
+
+    fun addCollectorItem(item: CollectorItem) {
+        collectorItems.add(item)
+        collectors.forEach {
+            val collector: Collector = it.value
+            if (!collector.storedItems.containsKey(item)) {
+                collector.storedItems[item] = 0
+            }
+        }
     }
 
     fun getCollectorItem(type: Material): CollectorItem? {

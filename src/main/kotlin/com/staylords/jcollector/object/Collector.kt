@@ -26,15 +26,30 @@ import org.bukkit.entity.Player
  */
 class Collector() {
 
-    private lateinit var id: String
-    private lateinit var storedItems: HashMap<CollectorItem, Int>
+    lateinit var id: String
+    lateinit var storedItems: HashMap<CollectorItem, Int>
 
-    private var soldItemsCount: Int = 0
-    private var totalSalesAmount: Double = 0.0
+    var soldItemsCount: Int = 0
+    var totalSalesAmount: Double = 0.0
 
     constructor(id: String) : this() {
         this.id = id
         this.storedItems = HashMap()
+    }
+
+    fun initialize() {
+        val collectorService: CollectorService = JCollector.instance.collectorService
+
+        collectorService.collectorItems.forEach {
+            storedItems[it] = 0
+        }
+    }
+
+    fun canCollect(type: Material): Boolean = storedItems.any { it.key.type == type }
+
+    fun increment(item: CollectorItem, value: Int) {
+        val valueStored: Int = storedItems[item]!!
+        storedItems[item] = valueStored + value
     }
 
     private fun sellItem(executor: Player, type: Material) {
@@ -48,8 +63,7 @@ class Collector() {
 
         val faction: Faction = Factions.getInstance().getFactionById(id)
         // FactionsUUID has no faction bank to store money there, so we deposit the amount
-        val vaultHook: VaultHook? = (hookService.getHook("Vault") as VaultHook?)
-        if (vaultHook == null || !vaultHook.isEnabled()) return
+        val vaultHook: VaultHook = hookService.getVaultHook()
         vaultHook.economy?.depositPlayer(executor, gain)
         executor.sendMessage("${ChatColor.GREEN}You're now $$gain richer!")
 

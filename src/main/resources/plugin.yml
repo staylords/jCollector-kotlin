@@ -5,7 +5,6 @@ author: staylords
 website: http://git.staylords.com/
 
 load: POSTWORLD
-database: true
 
 depend:
   - Vault

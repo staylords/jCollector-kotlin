@@ -8,6 +8,7 @@
 package com.staylords.jcollector.`object`
 
 import org.bukkit.Material
+import org.bukkit.entity.EntityType
 import org.bukkit.inventory.ItemStack
 
 /**
