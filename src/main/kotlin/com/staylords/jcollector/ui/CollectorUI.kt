@@ -11,6 +11,7 @@ import com.staylords.jcollector.JCollector
 import com.staylords.jcollector.JCollectorConst
 import com.staylords.jcollector.hooks.impl.VaultHook
 import com.staylords.jcollector.`object`.Collector
+import com.staylords.jcollector.services.CollectorService
 import com.staylords.jcollector.services.HookService
 import com.staylords.jcollector.ui.utils.ItemBuilder
 import fr.minuskube.inv.ClickableItem
@@ -39,21 +40,49 @@ class CollectorUI() : InventoryProvider {
     }
 
     fun getInventory(): SmartInventory {
-        return SmartInventory.builder()
-            .manager(JCollector.instance.inventoryManager)
-            .id("collector")
-            .provider(this)
-            .size(5, 9)
-            .title("Collector #" + collector.id)
-            .build()
+        return SmartInventory.builder().manager(JCollector.instance.inventoryManager).id("collector").provider(this)
+            .size(5, 9).title("Collector #" + collector.id).build()
     }
 
     override fun init(player: Player, contents: InventoryContents) {
         contents.fillBorders(ClickableItem.empty(ItemStack(Material.STAINED_GLASS_PANE)))
         contents.newIterator("animation", SlotIterator.Type.HORIZONTAL, 3, 0)
+
+        val collectorService: CollectorService = JCollector.instance.collectorService
+
+        collector.storedItems.forEach {
+            contents.add(ClickableItem.of(
+                ItemBuilder(it.key.type).name("${ChatColor.LIGHT_PURPLE}${ChatColor.BOLD}${it.key.displayName}")
+                    .setLore(
+                        listOf(
+                            "${ChatColor.DARK_GRAY}DROP: ${
+                                it.key.type.name.replace("_", " ")
+                            }",
+                            "",
+                            "${ChatColor.WHITE}Unit price: ${ChatColor.GRAY}$${
+                                JCollectorConst.NUMBER_FORMAT.format(
+                                    collectorService.getItemPrice(it.key)
+                                )
+                            }",
+                            "",
+                            "${ChatColor.GREEN}You have ${ChatColor.DARK_GREEN}${
+                                JCollectorConst.NUMBER_FORMAT.format(it.value)
+                            } ${ChatColor.GREEN}${
+                                it.key.type.name.toLowerCase().replace("_", " ")
+                            } units",
+                            "${ChatColor.GREEN}available to sell for ${ChatColor.DARK_GREEN}$0.0${ChatColor.GREEN}.",
+                            "",
+                            "${ChatColor.LIGHT_PURPLE}[SELL]"
+                        )
+                    ).build()
+            ) {})
+        }
     }
 
-    override fun update(player: Player, contents: InventoryContents) {
+    /*
+     * Little loading animation i made
+     */
+    private fun animate(contents: InventoryContents) {
         val state: Int = contents.property("state", 0)
         contents.setProperty("state", state + 1)
 
@@ -78,29 +107,42 @@ class CollectorUI() : InventoryProvider {
         iterator.set(ClickableItem.empty(ItemStack(Material.STAINED_GLASS_PANE, 1, 5)))
 
         contents.fillBorders(ClickableItem.empty(glass))
+    }
+
+    override fun update(player: Player, contents: InventoryContents) {
+        animate(contents)
 
         // UI design
         val hookService: HookService = JCollector.instance.hookService
         val vaultHook: VaultHook = hookService.getVaultHook()
 
+        contents.firstEmpty()
+
         contents.set(3, 4, ClickableItem.of(
-            ItemBuilder(Material.HOPPER).name("${ChatColor.LIGHT_PURPLE}${ChatColor.BOLD}Collector")
-                .setLore(
-                    listOf(
-                        "${ChatColor.DARK_GRAY}ID: ${collector.id}",
-                        "",
-                        "${ChatColor.WHITE}Status: ${ChatColor.GRAY}Enabled",
-                        "${ChatColor.WHITE}Sold Items: ${ChatColor.GRAY}${JCollectorConst.NUMBER_FORMAT.format(collector.soldItemsCount)}",
-                        "${ChatColor.WHITE}Total Sales: ${ChatColor.GRAY}$${JCollectorConst.NUMBER_FORMAT.format(collector.totalSalesAmount)}",
-                        "",
-                        "${ChatColor.GREEN}You have ${ChatColor.DARK_GREEN}0 ${ChatColor.GREEN}items available to sell for ${ChatColor.DARK_GREEN}$0.0",
-                        " ${ChatColor.GREEN}-> Click here to sell everything",
-                    )
-                ).build()
+            ItemBuilder(Material.HOPPER).name("${ChatColor.LIGHT_PURPLE}${ChatColor.BOLD}Collector").setLore(
+                listOf(
+                    "${ChatColor.DARK_GRAY}ID: ${collector.id}",
+                    "",
+                    "${ChatColor.WHITE}Items Sold: ${ChatColor.GRAY}${
+                        JCollectorConst.NUMBER_FORMAT.format(
+                            collector.soldItemsCount
+                        )
+                    }",
+                    "${ChatColor.WHITE}Total Sales: ${ChatColor.GRAY}$${
+                        JCollectorConst.NUMBER_FORMAT.format(
+                            collector.totalSalesAmount
+                        )
+                    }",
+                    "${ChatColor.WHITE}Status: ${ChatColor.GRAY}Working",
+                    "",
+                    "${ChatColor.GREEN}You have ${ChatColor.DARK_GREEN}0 ${ChatColor.GREEN}item units",
+                    "${ChatColor.GREEN}available to sell for ${ChatColor.DARK_GREEN}$0${ChatColor.GREEN}.",
+                    "",
+                    "${ChatColor.LIGHT_PURPLE}[SELL ALL]"
+                )
+            ).build()
         ) {
-            //if () {
-//
-            //          }
+            //if ()
         })
     }
 }

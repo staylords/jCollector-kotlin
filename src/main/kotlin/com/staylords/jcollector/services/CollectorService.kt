@@ -16,6 +16,8 @@ import net.brcdev.shopgui.ShopGuiPlusApi
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.entity.Player
+import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * @project jCollector-kotlin
@@ -25,21 +27,17 @@ import org.bukkit.entity.Player
  */
 class CollectorService(private val plugin: JCollector) {
 
-    private val collectors: HashMap<String, Collector> = HashMap()
+    val collectors: HashMap<String, Collector> = HashMap()
 
     val collectorItems: ArrayList<CollectorItem> = ArrayList()
 
     init {
         collectors.clear()
         collectorItems.clear()
-
-        loadItems()
-        loadCollectors()
     }
 
     fun addCollector(collector: Collector) {
         collectors[collector.id] = collector
-        collector.initialize()
     }
 
     fun getCollector(id: String): Collector? {
@@ -70,6 +68,11 @@ class CollectorService(private val plugin: JCollector) {
         return collectorItems.stream().filter { item -> item.type == type }.findFirst().orElse(null)
     }
 
+    fun getCollectorItem(name: String): CollectorItem? {
+        return collectorItems.stream().filter { item -> item.displayName.equals(name, ignoreCase = true) }.findFirst()
+            .orElse(null)
+    }
+
     fun getItemPrice(item: CollectorItem): Double {
         val sgpHook: ShopGuiPlusHook? = (plugin.hookService.getHook("ShopGUIPlus") as ShopGuiPlusHook?)
         if (sgpHook != null && sgpHook.isEnabled()) {
@@ -78,12 +81,36 @@ class CollectorService(private val plugin: JCollector) {
         return 0.0
     }
 
-    private fun loadCollectors() {
+    fun loadCollectors() {
+        val mongoService: MongoService = plugin.mongoService
+
         // Load collectors from database
+        try {
+            mongoService.getCollectorsIds(callback = {
+                plugin.logger.info("Found ${it.size} collectors in database.")
+                it.forEach { id -> mongoService.loadCollector(id) }
+            })
+            plugin.logger.info("Successfully loaded all collectors!")
+        } catch (e: Exception) {
+            plugin.logger.severe("Failed to load collectors.")
+            e.printStackTrace()
+        }
     }
 
-    private fun loadItems() {
+    fun loadItems() {
+        val mongoService: MongoService = plugin.mongoService
+
         // Load items from database
+        try {
+            mongoService.getCollectorItemsType(callback = {
+                plugin.logger.info("Found ${it.size} collector items in database.")
+                it.forEach { id -> mongoService.loadCollectorItem(id) }
+            })
+            plugin.logger.info("Successfully loaded all collector items!")
+        } catch (e: Exception) {
+            plugin.logger.severe("Failed to load collector items.")
+            e.printStackTrace()
+        }
     }
 
 }

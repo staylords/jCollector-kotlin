@@ -15,4 +15,7 @@ object JCollectorConst {
 
     const val COLLECTOR_COST: Double = 500000.0
 
+    const val MONGO_URI = "mongodb://localhost:27017"
+    const val MONGO_DATABASE = "jCollector"
+
 }

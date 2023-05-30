@@ -24,6 +24,7 @@ import org.bukkit.entity.Player
  * @date 28/05/2023
  * @author me@staylords.com
  */
+//@Serializable
 class Collector() {
 
     lateinit var id: String
@@ -35,9 +36,11 @@ class Collector() {
     constructor(id: String) : this() {
         this.id = id
         this.storedItems = HashMap()
+
+        initialize()
     }
 
-    fun initialize() {
+    private fun initialize() {
         val collectorService: CollectorService = JCollector.instance.collectorService
 
         collectorService.collectorItems.forEach {

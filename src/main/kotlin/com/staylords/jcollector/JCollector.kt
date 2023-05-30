@@ -14,10 +14,13 @@ import com.massivecraft.factions.FPlayer
 import com.staylords.jcollector.commands.CollectorCommands
 import com.staylords.jcollector.commands.providers.CollectorItemProvider
 import com.staylords.jcollector.commands.providers.FactionPlayerProvider
+import com.staylords.jcollector.commands.providers.MaterialProvider
 import com.staylords.jcollector.`object`.CollectorItem
 import com.staylords.jcollector.services.CollectorService
 import com.staylords.jcollector.services.HookService
+import com.staylords.jcollector.services.MongoService
 import fr.minuskube.inv.InventoryManager
+import org.bukkit.Material
 import org.bukkit.plugin.java.JavaPlugin
 
 /**
@@ -28,28 +31,45 @@ import org.bukkit.plugin.java.JavaPlugin
  */
 class JCollector : JavaPlugin() {
 
+    lateinit var mongoService: MongoService
     lateinit var collectorService: CollectorService
     lateinit var hookService: HookService
+
     lateinit var inventoryManager: InventoryManager
 
     override fun onEnable() {
         instance = this
 
         collectorService = CollectorService(this)
+        mongoService = MongoService(this)
         hookService = HookService(this)
+
+        collectorService.loadItems()
+        collectorService.loadCollectors()
 
         registerCommands()
 
-        // Initialize SmartInvs
+        /**
+         * Initialize InventoryManager class (SmartInvs)
+         * @see fr.minuskube.inv.InventoryManager
+         */
         inventoryManager = InventoryManager(this)
         inventoryManager.init()
     }
 
+    override fun onDisable() {
+        mongoService.close()
+    }
+
+    /**
+     * @see com.jonahseguin.drink.Drink
+     */
     private fun registerCommands() {
         val commandFramework: CommandService = Drink.get(this)
 
         // Register the providers first
         commandFramework.bind(CollectorItem::class.java).toProvider(CollectorItemProvider())
+        commandFramework.bind(Material::class.java).toProvider(MaterialProvider())
         commandFramework.bind(FPlayer::class.java).annotatedWith(Sender::class.java).toProvider(FactionPlayerProvider())
 
         // Register the commands

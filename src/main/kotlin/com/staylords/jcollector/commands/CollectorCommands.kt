@@ -10,6 +10,7 @@ package com.staylords.jcollector.commands
 import com.jonahseguin.drink.annotation.Command
 import com.jonahseguin.drink.annotation.Require
 import com.jonahseguin.drink.annotation.Sender
+import com.jonahseguin.drink.annotation.Text
 import com.massivecraft.factions.FPlayer
 import com.massivecraft.factions.Faction
 import com.massivecraft.factions.perms.Role
@@ -17,12 +18,11 @@ import com.staylords.jcollector.JCollector
 import com.staylords.jcollector.`object`.Collector
 import com.staylords.jcollector.`object`.CollectorItem
 import com.staylords.jcollector.services.CollectorService
+import com.staylords.jcollector.services.MongoService
 import com.staylords.jcollector.ui.CollectorBuyUI
 import com.staylords.jcollector.ui.CollectorUI
-import net.minecraft.server.v1_8_R3.BlockCactus
 import org.bukkit.ChatColor
 import org.bukkit.Material
-import org.bukkit.entity.EntityType
 import org.bukkit.entity.Player
 
 /**
@@ -33,7 +33,7 @@ import org.bukkit.entity.Player
  */
 class CollectorCommands {
 
-    @Command(name = "", aliases = [], desc = "Main collector command - Use/Buy")
+    @Command(name = "", desc = "Buy or open your faction's collector", async = true)
     @Require("jcollector.main")
     fun collectorCommand(@Sender player: FPlayer) {
         val collectorService: CollectorService = JCollector.instance.collectorService
@@ -60,11 +60,53 @@ class CollectorCommands {
         CollectorUI(collector).getInventory().open(player.player)
     }
 
-    @Command(name = "item add", desc = "dev")
-    @Require("jcollector.item.add")
-    fun collectorItemAddCommand(@Sender sender: Player) {
-        var collectorItem = CollectorItem()
+    @Command(name = "item create", desc = "dev", usage = "<drop_type [id/name]> <name..>")
+    @Require("jcollector.item.create")
+    fun collectorItemCreateCommand(@Sender sender: Player, type: Material, @Text displayName: String) {
+        val collectorService: CollectorService = JCollector.instance.collectorService
 
+        if (collectorService.getCollectorItem(type) != null) {
+            sender.sendMessage("${ChatColor.RED}An item for ${type.name} already exist.")
+            return
+        }
+
+        val collectorItem = CollectorItem(displayName, type)
+        collectorService.addCollectorItem(collectorItem)
+
+        sender.sendMessage("${ChatColor.YELLOW}Successfully added item ${ChatColor.GREEN}${displayName}${ChatColor.YELLOW}: ${ChatColor.RED}${type.name} (${type.id})${ChatColor.YELLOW}.")
+    }
+
+    @Command(
+        name = "item info",
+        desc = "List information for the provided collector item",
+        usage = "<item_type/name..>",
+        async = true
+    )
+    @Require("jcollector.item.info")
+    fun collectorItemInfoCommand(@Sender sender: Player, item: CollectorItem) {
+        val collectorService: CollectorService = JCollector.instance.collectorService
+
+        val toReturn = arrayOf(
+            "${ChatColor.YELLOW}Item: ${ChatColor.GREEN}${item.displayName}",
+            "${ChatColor.YELLOW}Type: ${ChatColor.RED}${item.type.name} (${item.type.id})"
+        )
+
+        sender.sendMessage(toReturn)
+    }
+
+    @Command(name = "item delete", desc = "dev", usage = "<drop_type [id/name]>")
+    @Require("jcollector.item.delete")
+    fun collectorItemDeleteCommand(@Sender sender: Player, type: Material, @Text displayName: String) {
+    }
+
+    @Command(name = "save", desc = "dev")
+    @Require("jcollector.item.delete")
+    fun collectorsSaveCommand(@Sender sender: Player) {
+        val collectorService: CollectorService = JCollector.instance.collectorService
+        val mongoService: MongoService = JCollector.instance.mongoService
+
+        collectorService.collectors.forEach { mongoService.saveCollector(it.value) }
+        collectorService.collectorItems.forEach { mongoService.saveCollectorItem(it) }
     }
 
 }

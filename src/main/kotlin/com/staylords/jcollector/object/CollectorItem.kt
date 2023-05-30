@@ -8,7 +8,6 @@
 package com.staylords.jcollector.`object`
 
 import org.bukkit.Material
-import org.bukkit.entity.EntityType
 import org.bukkit.inventory.ItemStack
 
 /**
@@ -17,6 +16,7 @@ import org.bukkit.inventory.ItemStack
  * @date 28/05/2023
  * @author me@staylords.com
  */
+//@Serializable
 class CollectorItem() {
 
     lateinit var displayName: String
@@ -30,9 +30,5 @@ class CollectorItem() {
     fun toItemStack(): ItemStack {
         return ItemStack(type)
     }
-
-    //private fun test() {
-    //    Collector("24324242")
-    //}
 
 }
