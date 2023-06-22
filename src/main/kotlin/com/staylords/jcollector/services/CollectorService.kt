@@ -7,17 +7,18 @@
 
 package com.staylords.jcollector.services
 
+import com.bgsoftware.wildstacker.api.WildStackerAPI
 import com.massivecraft.factions.*
 import com.staylords.jcollector.JCollector
-import com.staylords.jcollector.hooks.impl.ShopGuiPlusHook
+import com.staylords.jcollector.hooks.impl.ShopGUIPlusHook
+import com.staylords.jcollector.hooks.impl.WildStackerHook
 import com.staylords.jcollector.`object`.Collector
 import com.staylords.jcollector.`object`.CollectorItem
 import net.brcdev.shopgui.ShopGuiPlusApi
 import org.bukkit.Location
 import org.bukkit.Material
+import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
-import java.util.*
-import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * @project jCollector-kotlin
@@ -34,6 +35,12 @@ class CollectorService(private val plugin: JCollector) {
     init {
         collectors.clear()
         collectorItems.clear()
+
+        JCollector.asyncTimer(30L * 20L, 30L * 20L) {
+            val start = System.currentTimeMillis()
+            collectors.values.forEach { plugin.mongoService.saveCollector(it) }
+            plugin.logger.info("Saved ${collectors.values.size} collectors in ${System.currentTimeMillis() - start}ms.")
+        }
     }
 
     fun addCollector(collector: Collector) {
@@ -74,11 +81,19 @@ class CollectorService(private val plugin: JCollector) {
     }
 
     fun getItemPrice(item: CollectorItem): Double {
-        val sgpHook: ShopGuiPlusHook? = (plugin.hookService.getHook("ShopGUIPlus") as ShopGuiPlusHook?)
+        val sgpHook: ShopGUIPlusHook? = (plugin.hookService.getHook("ShopGUIPlus") as ShopGUIPlusHook?)
         if (sgpHook != null && sgpHook.isEnabled()) {
             return ShopGuiPlusApi.getItemStackPriceSell(item.toItemStack())
         }
-        return 0.0
+        return item.unitPrice
+    }
+
+    fun getEntitiesAmount(entity: LivingEntity): Int {
+        val wildStackerHook: WildStackerHook? = (plugin.hookService.getHook("WildStacker") as WildStackerHook?)
+        if (wildStackerHook != null && wildStackerHook.isEnabled()) {
+            return WildStackerAPI.getEntityAmount(entity)
+        }
+        return 1
     }
 
     fun loadCollectors() {

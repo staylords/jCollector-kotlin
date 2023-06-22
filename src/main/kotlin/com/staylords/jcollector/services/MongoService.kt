@@ -64,6 +64,10 @@ class MongoService(plugin: JCollector) : Closeable {
         callback.accept(collectorItems)
     }
 
+    fun deleteCollectorItem(collectorItem: CollectorItem) {
+
+    }
+
     fun loadCollectorItem(type: String) {
         val document: Document = itemsCollection.find(Filters.eq("type", type)).first() ?: return
 
@@ -71,6 +75,8 @@ class MongoService(plugin: JCollector) : Closeable {
 
         val collectorItem =
             CollectorItem(document["display_name"].toString(), Material.matchMaterial(document["type"].toString()))
+
+        collectorItem.unitPrice = document["unit_price"] as Double
 
         collectorService.addCollectorItem(collectorItem)
     }
@@ -80,6 +86,7 @@ class MongoService(plugin: JCollector) : Closeable {
 
         document.append("type", item.type.name)
         document.append("display_name", item.displayName)
+        document.append("unit_price", item.unitPrice)
 
         itemsCollection.replaceOne(Filters.eq("type", item.type.name), document, ReplaceOptions().upsert(true))
     }
@@ -90,6 +97,10 @@ class MongoService(plugin: JCollector) : Closeable {
         callback.accept(collectors)
     }
 
+    fun deleteCollector(collector: Collector) {
+
+    }
+
     fun loadCollector(id: String) {
         val document: Document = collectorsCollection.find(Filters.eq("_id", id)).first() ?: return
 
@@ -97,7 +108,6 @@ class MongoService(plugin: JCollector) : Closeable {
 
         val collector = Collector(document["_id"].toString())
 
-        // collector.storedItems
         collector.soldItemsCount = document["sold_items"] as Int
         collector.totalSalesAmount = document["total_sales"] as Double
 
@@ -105,15 +115,12 @@ class MongoService(plugin: JCollector) : Closeable {
 
         storedItemsDocument.forEach {
             val collectorItem: CollectorItem =
-                collectorService.getCollectorItem(Material.matchMaterial(it.key)) ?: return
+                collectorService.getCollectorItem(Material.matchMaterial(it.key)) ?: return@forEach
 
             collector.storedItems[collectorItem] = it.value as Int
         }
 
         collectorService.addCollector(collector)
-
-        println(collectorService.collectors.toString())
-
     }
 
     fun saveCollector(collector: Collector) {

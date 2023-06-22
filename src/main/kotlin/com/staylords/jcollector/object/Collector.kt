@@ -10,12 +10,12 @@ package com.staylords.jcollector.`object`
 import com.massivecraft.factions.Faction
 import com.massivecraft.factions.Factions
 import com.staylords.jcollector.JCollector
+import com.staylords.jcollector.JCollectorConst
 import com.staylords.jcollector.hooks.impl.VaultHook
 import com.staylords.jcollector.services.CollectorService
 import com.staylords.jcollector.services.HookService
 import org.bukkit.ChatColor
 import org.bukkit.Material
-import org.bukkit.Sound
 import org.bukkit.entity.Player
 
 /**
@@ -24,7 +24,6 @@ import org.bukkit.entity.Player
  * @date 28/05/2023
  * @author me@staylords.com
  */
-//@Serializable
 class Collector() {
 
     lateinit var id: String
@@ -55,33 +54,53 @@ class Collector() {
         storedItems[item] = valueStored + value
     }
 
-    private fun sellItem(executor: Player, type: Material) {
+    fun sell(vararg items: CollectorItem, sender: Player) {
         val collectorService: CollectorService = JCollector.instance.collectorService
         val hookService: HookService = JCollector.instance.hookService
+        val vault: VaultHook = hookService.getVaultHook()
 
-        val item: CollectorItem = collectorService.getCollectorItem(type)!!
-
-        val amountStored = storedItems[item]
-        val gain: Double = amountStored?.times(collectorService.getItemPrice(item)) ?: 0.0
-
-        val faction: Faction = Factions.getInstance().getFactionById(id)
-        // FactionsUUID has no faction bank to store money there, so we deposit the amount
-        val vaultHook: VaultHook = hookService.getVaultHook()
-        vaultHook.economy?.depositPlayer(executor, gain)
-        executor.sendMessage("${ChatColor.GREEN}You're now $$gain richer!")
-
-        // Send a message and play a sound to all online faction members
-        faction.onlinePlayers.forEach {
-            it.sendMessage(
-                "${ChatColor.GREEN}${ChatColor.BOLD}[Collector] ${ChatColor.GRAY}${executor.name} ${ChatColor.WHITE}withdrew ${ChatColor.DARK_GREEN}$$gain ${ChatColor.WHITE}by selling ${ChatColor.GRAY}${item.displayName}${ChatColor.WHITE}."
-            )
-            it.playSound(it.location, Sound.NOTE_PLING, 1.0f, 1.0f)
+        val gain = items.sumByDouble {
+            storedItems[it]?.times(collectorService.getItemPrice(it)) ?: 0.0
         }
 
-        this.soldItemsCount = soldItemsCount + amountStored!!
-        this.totalSalesAmount = totalSalesAmount + gain
+        val count = items.sumBy { storedItems[it] ?: 0 }
 
-        this.storedItems[item] = 0
+        vault.economy?.depositPlayer(sender, gain)
+        sender.sendMessage("${ChatColor.YELLOW}You're now ${ChatColor.GREEN}$${JCollectorConst.NUMBER_FORMAT.format(gain)} ${ChatColor.YELLOW}richer!")
+
+        val faction: Faction = Factions.getInstance().getFactionById(id)
+
+        /**
+         * Send a message to each faction online player
+         */
+        val separator = "${ChatColor.YELLOW}, ${ChatColor.RED}"
+        val lastSeparator = "${ChatColor.YELLOW}and${ChatColor.RED}"
+
+        val displayNames = items.filter { storedItems[it]!! > 0 }.map { it.type.name.toLowerCase().replace("_", " ") }
+        val result = when {
+            displayNames.size <= 1 -> displayNames.joinToString(separator = separator)
+            else -> "${
+                displayNames.dropLast(1).joinToString(separator = separator)
+            } $lastSeparator ${displayNames.last()}"
+        }
+
+        val toReturn = "${ChatColor.GREEN}${sender.name} ${ChatColor.YELLOW}withdrew ${ChatColor.GREEN}$${
+            JCollectorConst.NUMBER_FORMAT.format(gain)
+        } ${ChatColor.YELLOW}by selling ${ChatColor.GREEN}${
+            JCollectorConst.NUMBER_FORMAT.format(count)
+        } ${ChatColor.YELLOW}units worth of ${ChatColor.RED}${result}${ChatColor.YELLOW}!"
+
+        faction.onlinePlayers.forEach { it.sendMessage(toReturn) }
+
+        /**
+         * Updates collector statistics
+         */
+        items.forEach {
+            storedItems[it] = 0
+        }
+
+        soldItemsCount += count
+        totalSalesAmount += gain
     }
 
 }

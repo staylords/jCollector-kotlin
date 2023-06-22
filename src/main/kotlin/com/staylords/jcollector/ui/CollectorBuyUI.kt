@@ -55,8 +55,8 @@ class CollectorBuyUI : InventoryProvider {
         lore.add("${ChatColor.GRAY}chunk of your faction claim!")
         lore.add("")
 
-        val vaultHook: VaultHook = hookService.getVaultHook()
-        if (vaultHook.economy!!.getBalance(player) >= JCollectorConst.COLLECTOR_COST) {
+        val vault: VaultHook = hookService.getVaultHook()
+        if (vault.economy!!.getBalance(player) >= JCollectorConst.COLLECTOR_COST) {
             lore.add("${ChatColor.GREEN}Click here to buy it!")
         } else {
             lore.add("${ChatColor.RED}You don't have enough funds to buy it!")
@@ -67,8 +67,8 @@ class CollectorBuyUI : InventoryProvider {
                 .build()
 
         contents.set(1, 4, ClickableItem.of(collectorItem) {
-            if (vaultHook.economy!!.getBalance(player) >= JCollectorConst.COLLECTOR_COST) {
-                vaultHook.economy!!.withdrawPlayer(player, JCollectorConst.COLLECTOR_COST)
+            if (vault.economy!!.getBalance(player) >= JCollectorConst.COLLECTOR_COST) {
+                vault.economy!!.withdrawPlayer(player, JCollectorConst.COLLECTOR_COST)
 
                 val factionPlayer: FPlayer = FPlayers.getInstance().getByPlayer(player)
                 val collectorService: CollectorService = JCollector.instance.collectorService

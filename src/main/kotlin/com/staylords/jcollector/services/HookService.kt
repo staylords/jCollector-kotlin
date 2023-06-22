@@ -9,7 +9,7 @@ package com.staylords.jcollector.services
 
 import com.staylords.jcollector.JCollector
 import com.staylords.jcollector.hooks.Hook
-import com.staylords.jcollector.hooks.impl.ShopGuiPlusHook
+import com.staylords.jcollector.hooks.impl.ShopGUIPlusHook
 import com.staylords.jcollector.hooks.impl.VaultHook
 import com.staylords.jcollector.hooks.impl.WildStackerHook
 
@@ -30,7 +30,7 @@ class HookService(plugin: JCollector) {
         register("Vault", VaultHook())
 
         if (plugin.server.pluginManager.getPlugin("ShopGUIPlus") != null) {
-            register("ShopGUIPlus", ShopGuiPlusHook())
+            register("ShopGUIPlus", ShopGUIPlusHook())
         }
 
         if (plugin.server.pluginManager.getPlugin("WildStacker") != null) {
@@ -50,5 +50,4 @@ class HookService(plugin: JCollector) {
     fun getVaultHook(): VaultHook {
         return (getHook("Vault") as VaultHook)
     }
-
 }

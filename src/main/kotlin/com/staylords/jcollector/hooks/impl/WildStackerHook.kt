@@ -7,6 +7,8 @@
 
 package com.staylords.jcollector.hooks.impl
 
+import com.staylords.jcollector.JCollector
+import com.staylords.jcollector.JCollectorConst
 import com.staylords.jcollector.hooks.Hook
 
 /**
@@ -16,11 +18,12 @@ import com.staylords.jcollector.hooks.Hook
  * @author me@staylords.com
  */
 class WildStackerHook : Hook {
+
     override fun run() {
-        TODO("Not yet implemented")
+        JCollector.instance.logger.info("WildStacker Hook: ${isEnabled()}")
     }
 
     override fun isEnabled(): Boolean {
-        TODO("Not yet implemented")
+        return JCollectorConst.WILD_STACKER_IMPLEMENTATION
     }
 }

@@ -15,6 +15,8 @@ import com.staylords.jcollector.commands.CollectorCommands
 import com.staylords.jcollector.commands.providers.CollectorItemProvider
 import com.staylords.jcollector.commands.providers.FactionPlayerProvider
 import com.staylords.jcollector.commands.providers.MaterialProvider
+import com.staylords.jcollector.listeners.CollectorListener
+import com.staylords.jcollector.listeners.FactionsListener
 import com.staylords.jcollector.`object`.CollectorItem
 import com.staylords.jcollector.services.CollectorService
 import com.staylords.jcollector.services.HookService
@@ -22,6 +24,7 @@ import com.staylords.jcollector.services.MongoService
 import fr.minuskube.inv.InventoryManager
 import org.bukkit.Material
 import org.bukkit.plugin.java.JavaPlugin
+import org.bukkit.scheduler.BukkitTask
 
 /**
  * @project jCollector-kotlin
@@ -49,6 +52,9 @@ class JCollector : JavaPlugin() {
 
         registerCommands()
 
+        server.pluginManager.registerEvents(CollectorListener(), this)
+        server.pluginManager.registerEvents(FactionsListener(), this)
+
         /**
          * Initialize InventoryManager class (SmartInvs)
          * @see fr.minuskube.inv.InventoryManager
@@ -58,6 +64,8 @@ class JCollector : JavaPlugin() {
     }
 
     override fun onDisable() {
+        collectorService.collectors.values.forEach { mongoService.saveCollector(it)  }
+
         mongoService.close()
     }
 
@@ -82,6 +90,12 @@ class JCollector : JavaPlugin() {
 
         lateinit var instance: JCollector
 
+        @JvmStatic
+        fun asyncTimer(delay: Long, interval: Long, lambda: () -> Unit): BukkitTask {
+            return instance.server.scheduler.runTaskTimerAsynchronously(instance, {
+                lambda.invoke()
+            }, delay, interval)
+        }
     }
 
 }

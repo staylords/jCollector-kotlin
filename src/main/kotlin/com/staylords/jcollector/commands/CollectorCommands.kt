@@ -15,6 +15,7 @@ import com.massivecraft.factions.FPlayer
 import com.massivecraft.factions.Faction
 import com.massivecraft.factions.perms.Role
 import com.staylords.jcollector.JCollector
+import com.staylords.jcollector.JCollectorConst
 import com.staylords.jcollector.`object`.Collector
 import com.staylords.jcollector.`object`.CollectorItem
 import com.staylords.jcollector.services.CollectorService
@@ -84,14 +85,29 @@ class CollectorCommands {
     )
     @Require("jcollector.item.info")
     fun collectorItemInfoCommand(@Sender sender: Player, item: CollectorItem) {
-        val collectorService: CollectorService = JCollector.instance.collectorService
-
         val toReturn = arrayOf(
-            "${ChatColor.YELLOW}Item: ${ChatColor.GREEN}${item.displayName}",
-            "${ChatColor.YELLOW}Type: ${ChatColor.RED}${item.type.name} (${item.type.id})"
+            "${ChatColor.YELLOW}Display Name: ${ChatColor.GREEN}${item.displayName}",
+            "${ChatColor.YELLOW}Type: ${ChatColor.RED}${item.type.name} (${item.type.id})",
+            "${ChatColor.YELLOW}Unit price: ${ChatColor.GREEN}$${JCollectorConst.NUMBER_FORMAT.format(item.unitPrice)}"
         )
 
         sender.sendMessage(toReturn)
+    }
+
+    @Command(
+        name = "item price",
+        desc = "Set the unit price for the provided collector item",
+        usage = "<item_type/name..> <price>",
+        async = true
+    )
+    @Require("jcollector.item.price")
+    fun collectorItemPriceCommand(@Sender sender: Player, item: CollectorItem, price: Double) {
+        val mongoService: MongoService = JCollector.instance.mongoService
+
+        item.unitPrice = price
+        mongoService.saveCollectorItem(item)
+
+        sender.sendMessage("${ChatColor.YELLOW}Successfully set the unit price to ${ChatColor.GREEN}$${JCollectorConst.NUMBER_FORMAT.format(price)} ${ChatColor.YELLOW}for ${ChatColor.RED}${item.type.name} (${item.type.id})${ChatColor.YELLOW}.")
     }
 
     @Command(name = "item delete", desc = "dev", usage = "<drop_type [id/name]>")

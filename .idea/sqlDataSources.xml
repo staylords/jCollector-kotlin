@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DdlMappings">
+    <mapping uuid="68c7284e-655d-4c68-95d1-1e286aa35ba9" name="jcollector@localhost Mapping">
+      <data-sources db="5dce4d33-7264-441b-8f43-ff05c8703641" ddl="ddb40619-7782-42a0-bd74-870d7b7bbe4c" />
+      <scope>
+        <node kind="schema" qname="jCollector" />
+      </scope>
+    </mapping>
+  </component>
+</project>

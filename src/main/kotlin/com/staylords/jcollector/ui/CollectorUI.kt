@@ -9,10 +9,8 @@ package com.staylords.jcollector.ui
 
 import com.staylords.jcollector.JCollector
 import com.staylords.jcollector.JCollectorConst
-import com.staylords.jcollector.hooks.impl.VaultHook
 import com.staylords.jcollector.`object`.Collector
 import com.staylords.jcollector.services.CollectorService
-import com.staylords.jcollector.services.HookService
 import com.staylords.jcollector.ui.utils.ItemBuilder
 import fr.minuskube.inv.ClickableItem
 import fr.minuskube.inv.SmartInventory
@@ -21,6 +19,7 @@ import fr.minuskube.inv.content.InventoryProvider
 import fr.minuskube.inv.content.SlotIterator
 import fr.minuskube.inv.content.SlotPos
 import net.md_5.bungee.api.ChatColor
+import org.apache.commons.lang.WordUtils
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
@@ -47,40 +46,10 @@ class CollectorUI() : InventoryProvider {
     override fun init(player: Player, contents: InventoryContents) {
         contents.fillBorders(ClickableItem.empty(ItemStack(Material.STAINED_GLASS_PANE)))
         contents.newIterator("animation", SlotIterator.Type.HORIZONTAL, 3, 0)
-
-        val collectorService: CollectorService = JCollector.instance.collectorService
-
-        collector.storedItems.forEach {
-            contents.add(ClickableItem.of(
-                ItemBuilder(it.key.type).name("${ChatColor.LIGHT_PURPLE}${ChatColor.BOLD}${it.key.displayName}")
-                    .setLore(
-                        listOf(
-                            "${ChatColor.DARK_GRAY}DROP: ${
-                                it.key.type.name.replace("_", " ")
-                            }",
-                            "",
-                            "${ChatColor.WHITE}Unit price: ${ChatColor.GRAY}$${
-                                JCollectorConst.NUMBER_FORMAT.format(
-                                    collectorService.getItemPrice(it.key)
-                                )
-                            }",
-                            "",
-                            "${ChatColor.GREEN}You have ${ChatColor.DARK_GREEN}${
-                                JCollectorConst.NUMBER_FORMAT.format(it.value)
-                            } ${ChatColor.GREEN}${
-                                it.key.type.name.toLowerCase().replace("_", " ")
-                            } units",
-                            "${ChatColor.GREEN}available to sell for ${ChatColor.DARK_GREEN}$0.0${ChatColor.GREEN}.",
-                            "",
-                            "${ChatColor.LIGHT_PURPLE}[SELL]"
-                        )
-                    ).build()
-            ) {})
-        }
     }
 
-    /*
-     * Little loading animation i made
+    /**
+     * Little animation I made to show the collector status
      */
     private fun animate(contents: InventoryContents) {
         val state: Int = contents.property("state", 0)
@@ -109,40 +78,86 @@ class CollectorUI() : InventoryProvider {
         contents.fillBorders(ClickableItem.empty(glass))
     }
 
+    private fun collector(contents: InventoryContents, player: Player) {
+        val collectorService: CollectorService = JCollector.instance.collectorService
+
+        val count = collector.storedItems.values.sum()
+        val gain = collector.storedItems.keys.sumByDouble {
+            collector.storedItems[it]?.times(collectorService.getItemPrice(it)) ?: 0.0
+        }
+
+        val lore = listOf(
+            "${ChatColor.DARK_GRAY}ID: ${collector.id}",
+            "",
+            "${ChatColor.GRAY}Items Sold: ${ChatColor.YELLOW}${JCollectorConst.NUMBER_FORMAT.format(collector.soldItemsCount)}",
+            "${ChatColor.GRAY}Total Sales: ${ChatColor.GOLD}$${JCollectorConst.NUMBER_FORMAT.format(collector.totalSalesAmount)}",
+            "",
+            "${ChatColor.GRAY}Status: ${ChatColor.GREEN}Working",
+            "",
+            "${ChatColor.GRAY}Item Units:",
+            "${ChatColor.YELLOW}  Available: ${ChatColor.WHITE}${JCollectorConst.NUMBER_FORMAT.format(count)}",
+            "${ChatColor.YELLOW}  Gain: ${ChatColor.WHITE}$${JCollectorConst.NUMBER_FORMAT.format(gain)}",
+            "",
+            "${ChatColor.YELLOW}Click to sell all!"
+        )
+
+        contents.set(3, 4, ClickableItem.of(
+            ItemBuilder(Material.HOPPER).name("${ChatColor.GREEN}Collector").setLore(lore).build()
+        ) {
+            if (count > 0) collector.sell(
+                *collector.storedItems.entries.map { it.key }.toTypedArray(),
+                sender = player
+            )
+        })
+    }
+
+    private fun collectorItems(contents: InventoryContents, player: Player) {
+        val collectorService: CollectorService = JCollector.instance.collectorService
+        val startRow = 1
+        val startColumn = 1
+        val endRow = 2
+        val endColumn = 7
+        var currentRow = startRow
+        var currentColumn = startColumn
+
+        for ((item, quantity) in collector.storedItems.entries.sortedByDescending { it.value }) {
+            val itemPrice = JCollectorConst.NUMBER_FORMAT.format(collectorService.getItemPrice(item))
+            val displayName = "${ChatColor.GREEN}${item.displayName}"
+            val drop = item.type.name.replace('_', ' ')
+            val availableQuantity = JCollectorConst.NUMBER_FORMAT.format(quantity)
+            val gain = JCollectorConst.NUMBER_FORMAT.format(quantity * collectorService.getItemPrice(item))
+
+            val lore = listOf(
+                "${ChatColor.DARK_GRAY}DROP: $drop",
+                "",
+                "${ChatColor.GRAY}Unit price: ${ChatColor.GREEN}$$itemPrice",
+                "",
+                "${ChatColor.GRAY}${WordUtils.capitalize(drop.toLowerCase())} Units:",
+                "${ChatColor.YELLOW}  Available: ${ChatColor.WHITE}$availableQuantity",
+                "${ChatColor.YELLOW}  Gain: ${ChatColor.WHITE}$$gain",
+                "",
+                "${ChatColor.YELLOW}Click to sell!"
+            )
+
+            val clickableItem = ClickableItem.of(
+                ItemBuilder(item.type).name(displayName).setLore(lore).build()
+            ) { if (quantity > 0) collector.sell(item, sender = player) }
+
+            contents.set(SlotPos.of(currentRow, currentColumn), clickableItem)
+
+            if (++currentColumn > endColumn) {
+                currentColumn = startColumn
+                if (++currentRow > endRow) break
+            }
+        }
+    }
+
     override fun update(player: Player, contents: InventoryContents) {
+        // Animation
         animate(contents)
 
         // UI design
-        val hookService: HookService = JCollector.instance.hookService
-        val vaultHook: VaultHook = hookService.getVaultHook()
-
-        contents.firstEmpty()
-
-        contents.set(3, 4, ClickableItem.of(
-            ItemBuilder(Material.HOPPER).name("${ChatColor.LIGHT_PURPLE}${ChatColor.BOLD}Collector").setLore(
-                listOf(
-                    "${ChatColor.DARK_GRAY}ID: ${collector.id}",
-                    "",
-                    "${ChatColor.WHITE}Items Sold: ${ChatColor.GRAY}${
-                        JCollectorConst.NUMBER_FORMAT.format(
-                            collector.soldItemsCount
-                        )
-                    }",
-                    "${ChatColor.WHITE}Total Sales: ${ChatColor.GRAY}$${
-                        JCollectorConst.NUMBER_FORMAT.format(
-                            collector.totalSalesAmount
-                        )
-                    }",
-                    "${ChatColor.WHITE}Status: ${ChatColor.GRAY}Working",
-                    "",
-                    "${ChatColor.GREEN}You have ${ChatColor.DARK_GREEN}0 ${ChatColor.GREEN}item units",
-                    "${ChatColor.GREEN}available to sell for ${ChatColor.DARK_GREEN}$0${ChatColor.GREEN}.",
-                    "",
-                    "${ChatColor.LIGHT_PURPLE}[SELL ALL]"
-                )
-            ).build()
-        ) {
-            //if ()
-        })
+        collector(contents, player)
+        collectorItems(contents, player)
     }
 }

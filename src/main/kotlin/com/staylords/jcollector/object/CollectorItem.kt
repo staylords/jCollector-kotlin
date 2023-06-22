@@ -16,11 +16,12 @@ import org.bukkit.inventory.ItemStack
  * @date 28/05/2023
  * @author me@staylords.com
  */
-//@Serializable
 class CollectorItem() {
 
     lateinit var displayName: String
     lateinit var type: Material
+
+    var unitPrice: Double = 0.0
 
     constructor(displayName: String, type: Material) : this() {
         this.displayName = displayName

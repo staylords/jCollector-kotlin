@@ -18,4 +18,7 @@ object JCollectorConst {
     const val MONGO_URI = "mongodb://localhost:27017"
     const val MONGO_DATABASE = "jCollector"
 
+    const val WILD_STACKER_IMPLEMENTATION = true
+    const val SHOP_GUI_PLUS_IMPLEMENTATION = false
+
 }
